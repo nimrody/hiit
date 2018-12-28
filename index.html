@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link rel="stylesheet" href="normalize.min.css">
+    <link rel="stylesheet" href="milligram.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+          font-size: 10px;
+        }
+        /*
+        .container {
+          width: 300px;
+          margin-left: auto;
+          margin-right: auto;
+          margin-top: 2rem;
+          border-style: solid;
+          border-radius: 5px;
+          border-width: 0.1px;
+        }*/
+        .center-text {
+          text-align: center;
+        }
+        .center-div-wrapper {
+          position: relative;
+          left: 50%;
+          float: left;
+        }
+        .center-div {
+          position: relative;
+          left: -50%;
+          float: left;
+        }
+        .clearfix {
+          clear: both;
+        }
+
+    </style>
+  </head>
+  <body class="center-div-wrapper">
+    <div class="container center-div">
+      <h2 class="center-text">HIIT Trainer</h1>
+
+      <div class="center-div-wrapper">
+      <h2 class="center-div" id="timer">00</h2>
+      </div>
+      <div class="clearfix"></div>
+
+      <div class="center-div-wrapper">
+      <button class="center-div button" id="start_button">Start Workout</button>
+      </div>
+      <div class="clearfix"></div>
+
+      <p>Workout: (45 seconds work, 15 seconds rest) </p>
+      <ol>
+        <li id="ex0">Burpees (legs back then forward and jump knees bent )</li>
+        <li id="ex1">Jumping Jacks</li>
+        <li id="ex2">Russian Twists (sitting, legs up in the air)</li>
+        <li id="ex3">In and out Twists (legs forward/back)</li>
+        <li id="ex4">Leg Flutters (on back, flip legs up in air)</li>
+        <li id="ex5">Plank knees to elbows (hill climb)</li>
+      </ol>
+    </div>
+
+    <script>
+      "use strict";
+
+      var timer_el = document.getElementById("timer");
+      var start_button_el = document.getElementById("start_button");
+      var ex_els = [];
+
+      start_button.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        if (window.timer) {
+          clearInterval(window.timer);
+        }
+
+        var started_at_millis = (new Date()).getTime();
+
+        window.timer = setInterval(function() {
+          var current_time_millis = (new Date()).getTime();
+          var seconds_passed = Math.floor((current_time_millis - started_at_millis) / 1000);
+          var seconds_passed_in_ex = second_passed % 60;
+          timer_el.innerText = ("0" + seconds_passed_in_ex).slice(-2);
+          timer_el.style.color = (seconds_passed_in_ex >= 45) ? 'red' : 'blue';
+
+          var ex = Math.floor(seconds_passed / 60);
+          for(var i=0; i<6; i++) {
+            document.getElementById("ex" + i).style.color = (i == ex) ? 'blue' : '';
+          }
+          if (ex > 5) {
+            clearInterval(window.timer);
+          }
+
+        }, 1000);
+      });
+
+
+    </script>
+
+  </body>
