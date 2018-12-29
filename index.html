@@ -9,7 +9,7 @@
 
     <style>
         body {
-          font-size: 10px;
+          font-size: 14px;
         }
         /*
         .container {
@@ -37,6 +37,9 @@
         .clearfix {
           clear: both;
         }
+        .vertical-space {
+          padding-top: 20px;
+        }
 
     </style>
   </head>
@@ -52,11 +55,11 @@
       <div class="center-div-wrapper">
       <button class="center-div button" id="start_button">Start Workout</button>
       </div>
-      <div class="clearfix"></div>
+      <div class="clearfix vertical-space"></div>
 
       <p>Workout: (45 seconds work, 15 seconds rest) </p>
       <ol>
-        <li id="ex0">Burpees (legs back then forward and jump knees bent )</li>
+        <li id="ex0">Burpees (legs back then jump knees bent )</li>
         <li id="ex1">Jumping Jacks</li>
         <li id="ex2">Russian Twists (sitting, legs up in the air)</li>
         <li id="ex3">In and out Twists (legs forward/back)</li>
@@ -74,16 +77,24 @@
 
       start_button.addEventListener('click', function(ev) {
         ev.preventDefault();
+
         if (window.timer) {
           clearInterval(window.timer);
         }
 
+        var buttonText = start_button.innerText.toLowerCase();
+        if (buttonText === 'start workout') {
+            start_button.innerText = 'Stop Workout';
+        } else {
+            start_button.innerText = 'Start Workout';
+            return;
+        }
         var started_at_millis = (new Date()).getTime();
 
         window.timer = setInterval(function() {
           var current_time_millis = (new Date()).getTime();
           var seconds_passed = Math.floor((current_time_millis - started_at_millis) / 1000);
-          var seconds_passed_in_ex = second_passed % 60;
+          var seconds_passed_in_ex = seconds_passed % 60;
           timer_el.innerText = ("0" + seconds_passed_in_ex).slice(-2);
           timer_el.style.color = (seconds_passed_in_ex >= 45) ? 'red' : 'blue';
 
