@@ -1,26 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-    <link rel="stylesheet" href="vendor/normalize.min.css">
-    <link rel="stylesheet" href="vendor/milligram.min.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset='utf-8'>
+    <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic'>
+    <link rel='stylesheet' href='vendor/normalize.min.css'>
+    <link rel='stylesheet' href='vendor/milligram.min.css'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
 
     <style>
         body {
           font-size: 14px;
         }
-        /*
-        .container {
-          width: 300px;
-          margin-left: auto;
-          margin-right: auto;
-          margin-top: 2rem;
-          border-style: solid;
-          border-radius: 5px;
-          border-width: 0.1px;
-        }*/
         .center-text {
           text-align: center;
         }
@@ -40,75 +30,119 @@
         .vertical-space {
           padding-top: 20px;
         }
+        .light-text {
+          opacity: 0.5;
+          font-size: 2.2rem; /* h4: 2.2rem, h3: 2.8rem */
+          text-transform: uppercase;
+        }
+
+        .active-exercise {
+          color: blue;
+        }
 
     </style>
   </head>
-  <body class="center-div-wrapper">
-    <div class="container center-div">
-      <h2 class="center-text">HIIT Trainer</h1>
+  <body class='center-div-wrapper'>
+    <div class='container center-div'>
+      <h2 class='center-text'>HIIT Trainer</h1>
 
-      <div class="center-div-wrapper">
-      <h2 class="center-div" id="timer">00</h2>
+      <div id='hyperapp-container'>
       </div>
-      <div class="clearfix"></div>
 
-      <div class="center-div-wrapper">
-      <button class="center-div button" id="start_button">Start Workout</button>
-      </div>
-      <div class="clearfix vertical-space"></div>
-
-      <p>Workout: (45 seconds work, 15 seconds rest) </p>
-      <ol>
-        <li id="ex0">Burpees (legs back then jump knees bent )</li>
-        <li id="ex1">Jumping Jacks</li>
-        <li id="ex2">Russian Twists (sitting, legs up in the air)</li>
-        <li id="ex3">In and out Twists (legs forward/back)</li>
-        <li id="ex4">Leg Flutters (on back, flip legs up in air)</li>
-        <li id="ex5">Plank knees to elbows (hill climb)</li>
-      </ol>
     </div>
 
+
+    <!-- https://github.com/jorgebucaran/hyperapp -->
+    <script src='https://unpkg.com/hyperapp'></script>
     <script>
-      "use strict";
+      'use strict';
 
-      var timer_el = document.getElementById("timer");
-      var start_button_el = document.getElementById("start_button");
-      var ex_els = [];
+      const { h, app } = hyperapp
 
-      start_button.addEventListener('click', function(ev) {
-        ev.preventDefault();
+      const ExerciseState = {
+        NOT_RUNNING: 'not-running',
+        RUNNING: 'running',
+        REST_BETWEEN_SETS: 'rest-between-sets',
+        REST_BETWEEN_EXCERSISES: 'rest-between-exercises'
 
-        if (window.timer) {
-          clearInterval(window.timer);
+      }
+      const state = {
+        totalSets: 5,
+        setRestSeconds: 120,
+
+        exerciseTimeSeconds: 45,
+        exerciseRestSeconds: 15,
+
+        exercises: [
+          'Burpees (legs back then jump knees bent)',
+          'Jumping Jacks',
+          'Russian Twists (sitting, legs up in the air)',
+          'In and out Twists (legs forward/back)',
+          'Leg Flutters (on back, flip legs up in air)',
+          'Plank knees to elbows (hill climb)' 
+        ],
+
+        exerciseState: ExerciseState.NOT_RUNNING,
+        setNumber: 1,
+        exerciseNumber: 0,
+        timerSeconds: 0,
+
+        timer: null
+      }
+
+      const actions = {
+        startExercise: () => state => ({ ...state, exerciseState: ExerciseState.RUNNING, timerSeconds: 0}),
+        stopExercise:  () => state => ({ ...state, exerciseState: ExerciseState.NOT_RUNNING}),
+        pauseExercise: () => state => ({ }),
+        tick: () => state => (state.exerciseState === ExerciseState.RUNNING 
+          ? { ...state, timerSeconds: (state.timerSeconds + 1) }
+          : state
+        )
+      }
+
+      function pad0(number) {
+        return ('0' + number).slice(-2);
+      }
+
+      function centerDiv(el) {
+        el.attributes.className = (el.attributes.className || '') + ' center-div';
+        return [ h('div', { className: 'center-div-wrapper' }, el ),
+                 h('div', { className: 'clearfix' }, []) ];
+      }
+
+      function setView(setNumber, totalSets) {
+        return [ 
+          h('span', { className: 'light-text' }, 'Set '),
+          h('span', { className: 'set-number' }, setNumber),
+          h('span', { className: 'light-text' }, 'of '),
+          h('span', { className: 'set-number' }, totalSets),
+          h('span', { className: 'light-text' }, ' Sets'),
+        ];
+      }
+
+      function handleButtonClick(state, actions) {
+        switch(state.exerciseState) {
+          case ExerciseState.NOT_RUNNING:
+            return actions.startExercise();
+          case ExerciseState.RUNNING:
+            return actions.stopExercise();
+          case ExerciseState.REST_BETWEEN_SETS:
+          case ExerciseState.REST_BETWEEN_EXCERSISES:
         }
 
-        var buttonText = start_button.innerText.toLowerCase();
-        if (buttonText === 'start workout') {
-            start_button.innerText = 'Stop Workout';
-        } else {
-            start_button.innerText = 'Start Workout';
-            return;
-        }
-        var started_at_millis = (new Date()).getTime();
+      }
 
-        window.timer = setInterval(function() {
-          var current_time_millis = (new Date()).getTime();
-          var seconds_passed = Math.floor((current_time_millis - started_at_millis) / 1000);
-          var seconds_passed_in_ex = seconds_passed % 60;
-          timer_el.innerText = ("0" + seconds_passed_in_ex).slice(-2);
-          timer_el.style.color = (seconds_passed_in_ex >= 45) ? 'red' : 'blue';
+      const view = (state, actions) => 
+        h('div', { oncreate: el => setInterval(actions.tick, 1000)  }, [
+          centerDiv(h('h2', {}, pad0(state.timerSeconds))),
+          centerDiv(h('h3', {}, setView(state.setNumber, state.totalSets))),
+          centerDiv(h('button', { onclick: () => handleButtonClick(state, actions)}, (state.exerciseState === ExerciseState.NOT_RUNNING) ? "Start Workout" : "Stop Workout")),
+          h('p', {className: 'vertical-space'}, 'Workout: (45 seconds work, 15 seconds rest)'),
+          h('ol', {}, state.exercises.map((e, idx) => 
+            h('li', {className: (idx === state.exerciseNumber) ? 'active-exercise' : ''}, e)))
+        ])
 
-          var ex = Math.floor(seconds_passed / 60);
-          for(var i=0; i<6; i++) {
-            document.getElementById("ex" + i).style.color = (i == ex) ? 'blue' : '';
-          }
-          if (ex > 5) {
-            clearInterval(window.timer);
-          }
-
-        }, 1000);
-      });
-
+      app(state, actions, view, document.getElementById('hyperapp-container'));
 
     </script>
 
