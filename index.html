@@ -30,6 +30,7 @@
         .vertical-space {
           padding-top: 20px;
         }
+
         .light-text {
           opacity: 0.5;
           font-size: 2.2rem; /* h4: 2.2rem, h3: 2.8rem */
@@ -38,6 +39,9 @@
 
         .active-exercise {
           color: blue;
+        }
+        .active-rest {
+          color: red;
         }
 
     </style>
@@ -84,16 +88,25 @@
 
         exerciseState: ExerciseState.NOT_RUNNING,
         setNumber: 1,
-        exerciseNumber: 0,
-        timerSeconds: 0,
+        timerStartMillis: 0,
 
         timer: null
       }
 
       const actions = {
-        startExercise: () => state => ({ ...state, exerciseState: ExerciseState.RUNNING, timerSeconds: 0}),
-        stopExercise:  () => state => ({ ...state, exerciseState: ExerciseState.NOT_RUNNING}),
-        pauseExercise: () => state => ({ }),
+        //startExercise: () => state => ({ ...state, exerciseState: ExerciseState.RUNNING, timerSeconds: 0}),
+        //stopExercise:  () => state => ({ ...state, exerciseState: ExerciseState.NOT_RUNNING}),
+        //pauseExercise: () => state => ({ }),
+
+        startStopClicked: () => state => {
+          switch(state.exerciseState) {
+            case ExerciseState.NOT_RUNNING:
+              return { ...state, exerciseState: ExerciseState.RUNNING, timerStartMillis: new Date().getTime()};
+          case ExerciseState.RUNNING:
+              return { ...state, exerciseState: ExerciseState.NOT_RUNNING};
+          case ExerciseState.REST_BETWEEN_SETS:
+          case ExerciseState.REST_BETWEEN_EXCERSISES:
+          }}, 
         tick: () => state => (state.exerciseState === ExerciseState.RUNNING 
           ? { ...state, timerSeconds: (state.timerSeconds + 1) }
           : state
@@ -120,27 +133,19 @@
         ];
       }
 
-      function handleButtonClick(state, actions) {
-        switch(state.exerciseState) {
-          case ExerciseState.NOT_RUNNING:
-            return actions.startExercise();
-          case ExerciseState.RUNNING:
-            return actions.stopExercise();
-          case ExerciseState.REST_BETWEEN_SETS:
-          case ExerciseState.REST_BETWEEN_EXCERSISES:
-        }
+      const view = (state, actions) => {
+        var timeSinceStartSec = Math.floor((new Date().getTime() - state.timerStartMillis)/1000);
+        var exerciseNumber = Math.floor(timeSinceStartSec / 60);
 
-      }
-
-      const view = (state, actions) => 
-        h('div', { oncreate: el => setInterval(actions.tick, 1000)  }, [
-          centerDiv(h('h2', {}, pad0(state.timerSeconds))),
+        return h('div', { oncreate: el => setInterval(actions.tick, 1000)  }, [
+          centerDiv(h('h2', { className: (timeSinceStartSec % 60)< 45 ? 'active-exercise' : 'active-rest'}, pad0(timeSinceStartSec % 60))),
           centerDiv(h('h3', {}, setView(state.setNumber, state.totalSets))),
-          centerDiv(h('button', { onclick: () => handleButtonClick(state, actions)}, (state.exerciseState === ExerciseState.NOT_RUNNING) ? "Start Workout" : "Stop Workout")),
+          centerDiv(h('button', { onclick: () => actions.startStopClicked()}, (state.exerciseState === ExerciseState.NOT_RUNNING) ? "Start Workout" : "Stop Workout")),
           h('p', {className: 'vertical-space'}, 'Workout: (45 seconds work, 15 seconds rest)'),
           h('ol', {}, state.exercises.map((e, idx) => 
-            h('li', {className: (idx === state.exerciseNumber) ? 'active-exercise' : ''}, e)))
+            h('li', {className: (idx === exerciseNumber) ? 'active-exercise' : ''}, e)))
         ])
+      }
 
       app(state, actions, view, document.getElementById('hyperapp-container'));
 
